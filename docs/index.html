@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>I Don't Believe Horses Exist</title>
+		<style>
+			html, body {
+				height: 100%;
+                margin: 0;
+                padding: 0;
+			}
+			body {
+				width: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			#important-message {
+				font-size: 96px;
+				text-align: center;
+				margin: 10px;
+			}
+		</style>
+	</head>
+	<body>
+        <div id="important-message">
+        </div>
+
+		<script id="self-destructing-js">
+			(function() {
+				// cleanup this script tag in the next frame
+				setTimeout(function() {
+					document.querySelector("script#self-destructing-js").remove();
+				});
+
+				const horseMessages = ["Show me some solid proof, <i>please</i>.",
+				"Have <i>you</i> ever seen two horses in the same room?",
+				"They just don't dude.",
+				"Call me crazy, I just don't think they do.",
+        "Think about it - if you were a horse, would you exist?"];
+				const randMessage = horseMessages[Math.floor(Math.random()*horseMessages.length)];
+				document.querySelector("#important-message").innerHTML = randMessage;
+			})();
+		</script>
+	</body>
+</html>
