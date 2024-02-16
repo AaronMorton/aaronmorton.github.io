@@ -1,46 +1,185 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>I Don't Believe Horses Exist</title>
-		<style>
-			html, body {
-				height: 100%;
+    <head>
+        <title>I Don't Believe Horses Exist</title>
+        <style>
+            html, body {
+                height: 100%;
                 margin: 0;
                 padding: 0;
-			}
-			body {
-				width: 100%;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-			}
-			#important-message {
-				font-size: 96px;
-				text-align: center;
-				margin: 10px;
-			}
-		</style>
-	</head>
-	<body>
+            }
+            body {
+                width: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            #important-message {
+                font-size: 96px;
+                text-align: center;
+                margin: 10px;
+            }
+        </style>
+    </head>
+    <body>
         <div id="important-message">
         </div>
 
-		<script id="self-destructing-js">
-			(function() {
-				// cleanup this script tag in the next frame
-				setTimeout(function() {
-					document.querySelector("script#self-destructing-js").remove();
-				});
+        <script id="self-destructing-js">
+            (function() {
+                // cleanup this script tag in the next frame (can i just do it in this frame? probably)
+                setTimeout(function() {
+                    document.querySelector("script#self-destructing-js").remove();
+                });
 
-				const horseMessages = ["Show me some solid proof, <i>please</i>.",
-				"Have <i>you</i> ever seen two horses in the same room?",
-				"They just don't dude.",
-				"Call me crazy, I just don't think they do.",
-        "Think about it - if you were a horse, would you exist?",
-        "If a horse falls over in the woods, and no one is around to hear it, they don't exist."];
-				const randMessage = horseMessages[Math.floor(Math.random()*horseMessages.length)];
-				document.querySelector("#important-message").innerHTML = randMessage;
-			})();
-		</script>
-	</body>
+                // thanks stackoverflow
+                function round(value, precision) {
+                    var multiplier = Math.pow(10, precision || 0);
+                    return Math.round(value * multiplier) / multiplier;
+                }
+
+                // Choose options with a percent chance, efficiently
+                // Will throw if initialized with percentages that don't add up to 100
+                class PercentChooser {
+
+                    #thousandOptionsArray;
+                    #optionsMap;
+
+                    constructor(percOptions) {
+                        if (!(percOptions && Array.isArray(percOptions))) {
+                            throw 'invalid options';
+                        }
+
+                        // build thousand options map
+                        let optionNumber = 0;
+                        this.#optionsMap = [];
+                        this.#thousandOptionsArray = [];
+                        percOptions.forEach((percOption) => {
+                            this.#optionsMap.push(percOption.name);
+
+                            // for a percentage of 3.3 (rounded to 1 decimal place), add 33 options
+                            // to the array. The value of what you add is the number that maps to 
+                            // the option name.
+                            const percentage = round(percOption.percentage, 1);
+                            const numberOfBits = percentage*10;
+                            for (let i=0; i<numberOfBits; i++) {
+                                this.#thousandOptionsArray.push(optionNumber);
+                            }
+
+                            optionNumber++;
+                        });
+
+                        if (this.#thousandOptionsArray.length != 1000) {
+                            throw `percentages don't add up boi ${this.#thousandOptionsArray.length}`;
+                        }
+                    }
+
+                    // choose an option based on the provided percentages
+                    choose() {
+                        const chosenOptionNumber = this.#thousandOptionsArray[Math.floor(Math.random()*999)];
+                        return this.#optionsMap[chosenOptionNumber];
+                    }
+
+
+                }
+
+                const version = 4;
+
+                const lastSeenItemsKey = 'jokesite.lastSeenItems';
+                const observedCountsKey = 'jokesite.observedCounts';
+                const versionKey = 'jokesite.version';
+
+                // RETRIEVE last seen items and version check - wipe out storage if versions don't match
+                let lastSeenItems;
+                let observedCounts;
+                try {
+                    // get observed counts
+                    observedCounts = JSON.parse(localStorage.getItem(observedCountsKey) || '{}');
+
+                    // get last seen items
+                    try {
+                        lastSeenItems = JSON.parse(localStorage.getItem(lastSeenItemsKey) || '[]');
+                    } catch (ex) {
+                        console.log('bad last seen items');
+                        lastSeenItems = [];
+                    }
+
+                    // get and validate version
+                    const versionString = localStorage.getItem(versionKey);
+                    const parsedVersion = parseInt(versionString);
+                    if (parsedVersion != version) {
+                        console.log(`cleaning up old storage with version of ${parsedVersion}`);
+                        localStorage.removeItem(lastSeenItemsKey);
+                        localStorage.removeItem(observedCountsKey);
+                        lastSeenItems = [];
+                        observedCounts = {};
+                        localStorage.setItem(versionKey, version);
+                    }
+
+                } catch(ex) {
+                    console.log(`error encountered getting local storage items: ${ex}`);
+                    return;
+                }
+
+                // GENERATE NEW MESSAGE
+                let randMessage = 'no-message';
+                try {
+                    const percentChooserOption = [
+                        {name: 'Show me some solid proof, <i>please</i>.', percentage: 16},
+                        {name: 'Have <i>you</i> ever seen two horses in the same room at the same time?', percentage: 16 },
+			{name: 'They just don\'t dude.', percentage: 16 },
+			{name: 'Call me crazy, I just don\'t think they do.', percentage: 16 },
+			{name: 'Think about it - if you were a horse, would you exist?', percentage: 20 },
+			{name: 'If a horse falls over in the woods, and no one is around to hear it, they don\'t exist.', percentage: 16 }
+                    ];
+
+                    if(percentChooserOptions.length < 2) {
+                        throw 'you need at least two options king';
+                    }
+                  
+                    const messageChooser = new PercentChooser(percentChooserOptions);
+                    randMessage = messageChooser.choose();
+                    //we NEVER want to see the same message twice
+                    //this will explode if there is only one option, hence the check above
+                    while (randMessage == lastSeenItems[0]) {
+                        randMessage = messageChooser.choose();
+                    }
+                } catch(ex) {
+                    console.log(`error encountered generating joke. aborting ${ex}`);
+                }
+
+
+                // STORE last seen items and observed count
+                try {
+                    localStorage.setItem(lastSeenItemsKey, JSON.stringify([randMessage].concat(lastSeenItems.slice(0,4))));
+
+                    // Store observed counts for fun
+                    if (observedCounts[randMessage]) {
+                        observedCounts[randMessage] += 1;
+                    } else {
+                        observedCounts[randMessage] = 1;
+                    }
+                    localStorage.setItem(observedCountsKey, JSON.stringify(observedCounts));
+
+                    //log out observed percentages and fun stats
+                    let totalCount = 0;
+                    const entries = Object.entries(observedCounts);
+                    for (const [_, count] of entries) {
+                        totalCount += count;
+                    }
+                    for (const [message, count] of entries) {
+                        console.debug(`${message} : ${count/totalCount}`);
+                    }
+                    console.debug(`total refreshes ${totalCount}`);
+
+
+                } catch(ex) {
+                    console.log(`error encountered storing to local storage ${ex}`);
+                }
+
+                // render out baby
+                document.querySelector('#important-message').innerHTML = randMessage;
+            })();
+        </script>
+    </body>
 </html>
